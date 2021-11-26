@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <title>Quiz</title>
+</head>
+<body>
+    <h1>Welcome to the Quiz</h1>
+    <h2>GoodLuck</h2>
+    <a href='javascript:getProducts()'> Begin Quiz</a>
+    <div id='quizDiv'></div>
+
+</body>
+
+<script>
+    let question; //to keep track of which question
+    let counter; //to keep track of the answer
+    function getProducts()
+    {   
+        let xReq = new XMLHttpRequest();
+        xReq.onreadystatechange = displayProducts;
+
+        xReq.open('GET','/productsInJson',true);
+        xReq.send();
+    }
+
+    function displayProducts()
+    {
+        if (this.readyState == 4 && this.status == 200) 
+        {
+            let quizDiv = document.getElementById('quizDiv');
+            let productList = JSON.parse(this.responseText);
+            let content ='';
+            let id = 0;
+            question=0;
+            for (p of productList)
+            {
+                let optionList = p.options;
+                counter =0; //resets when a new question is started
+                content += '<div>';
+                content += '<div>';
+                content += `<label>${p.stem}</label><br>` //displays the question
+                for (o of optionList)
+                {
+ 
+                        
+                        content += `<input type="radio" id="${id}" name="${question}" value="${counter}" onclick="clickedButton(this.name,this.value);">
+                        <label for="${id}">${o}</label><br>`; //displays the options
+                               
+                        counter++;   //increments the answer option
+                        id++;     //increments the id to help with the label         
+                }
+                question++; //increments the question
+                
+            }
+            
+            content += '<button id="submit_btn" onclick ="submitQuiz();">Submit</button>'; //when the submit button is clicked go to the submitQuiz function
+            content += '</div>'
+            content += '<div id="markDiv"></div>';     //this is where the mark is displayed 
+            content += '</div>';
+            content += '\n\n';
+            quizDiv.innerHTML = content;
+        }
+    }
+    
+
+
+    function clickedButton (quest,ans)
+    {
+
+        let xReq = new XMLHttpRequest();
+        xReq.onreadystatechange = displayResponse;
+
+
+        xReq.open('GET','/answers?question='+quest+'&counter='+ans,true); //sends the question and answer to the server
+        xReq.send();
+        
+ 
+    }
+
+    function displayResponse()
+    {
+        if (this.readyState == 4 && this.status == 200)
+        {
+            alert(this.responseText); //displays the response as an alert
+        }
+    }
+
+    function submitQuiz()
+    {
+        let xReq = new XMLHttpRequest();
+        xReq.onreadystatechange = displayMark;
+
+
+        let a = document.querySelectorAll('input'); //select everything that has an input tag
+
+        var options = []; //have an array to hold the selected values
+
+        for (q of a)
+        {
+            if (q.checked) //see which ones are check
+            {
+                options.push(q.value); //push it into the array
+            }
+        }
+
+        xReq.open('GET','/total?a1='+options[0]+'&a2='+options[1]+'&a3='+options[2]+'&a4='+options[3]+'&a5='+ options[4],true);
+        xReq.send();
+        
+    }
+
+    function displayMark()
+    {
+        if (this.readyState == 4 && this.status == 200)
+        {
+            let markDiv = document.getElementById('markDiv'); //display the mark
+            markDiv.innerHTML = this.responseText;
+        }
+    }
+
+</script>
+</html>
